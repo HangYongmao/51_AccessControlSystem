@@ -131,4 +131,5 @@ void readCurrentTime(char * time)
     time[13] = ':';
     time[14] = ReadSet1302(0x83)%60/10+'0';
     time[15] = ReadSet1302(0x83)%60%10+'0';
+    sprintf(time, "2019-04-12 20:28");
 }

@@ -269,3 +269,79 @@ void LCDDispalyMain()
     readCurrentTime(time);
     Disp_String_8x16(7, 1, time);
 }
+
+// 显示 非法闯入！
+void showIntrusion()
+{
+    int i;
+    // 清屏指定区域
+    LcdCls(1, 1, 128, 48);
+    for (i=0; i<5; i++)
+    {
+        Disp_16x16(3, 29+16*i, &Intrusion[32*i]);
+    }
+}
+
+// 显示 联系管理员
+void showContactAdmin()
+{
+    int i;
+    // 清屏指定区域
+    LcdCls(1, 1, 128, 48);
+    for (i=0; i<8; i++)
+    {
+        Disp_16x16(2, 1+16*i, &ContactAdmin[32*i]);
+    }
+    for (i=0; i<6; i++)
+    {
+        Disp_16x16(4, 41+16*i, &addressAdmin[32*i]);
+    }
+}
+
+// 显示 请管理员刷卡
+void showPressCardAdmin()
+{
+    int i;
+    // 清屏指定区域
+    LcdCls(1, 1, 128, 48);
+    for (i=0; i<6; i++)
+    {
+        Disp_16x16(3, 17+16*i, &pressCardAdmin[32*i]);
+    }
+}
+
+// 显示 录入新卡
+void showEnterNewCark()
+{
+    int i;
+    // 清屏指定区域
+    LcdCls(1, 1, 128, 48);
+    for (i=0; i<5; i++)
+    {
+        Disp_16x16(3, 25+16*i, &EnterNewCark[32*i]);
+    }
+}
+
+// 显示 刷卡成功
+void showEnterCardSuccess()
+{
+    int i;
+    // 清屏指定区域
+    LcdCls(1, 1, 128, 48);
+    for (i=0; i<5; i++)
+    {
+        Disp_16x16(3, 29+16*i, &EnterCardSuccess[32*i]);
+    }
+}
+
+// 显示 录入成功
+void showEnterNewCardSuccess()
+{
+    int i;
+    // 清屏指定区域
+    LcdCls(1, 1, 128, 48);
+    for (i=0; i<4; i++)
+    {
+        Disp_16x16(3, 29+16*i, &EnterNewCardSuccess[32*i]);
+    }
+}

@@ -1,9 +1,10 @@
 #include "Infrared.h"
 #include "UART.h"
 #include <reg52.h>
+#include "main.h"
 
 extern bit IntrusionFlag;   // 1-非法闯入
-extern unsigned char menu;  // 0-主菜单模式 1-显示ID
+extern enum MenuPage menuPage;  // 0-主菜单模式 1-显示ID
 
 void InitInfrared()
 {
@@ -14,6 +15,6 @@ void InitInfrared()
 
 void Infrared_INT() interrupt 0
 {
-    if (menu == 0)
+    if (menuPage != ShowIDPage)
         IntrusionFlag = 1;
 }

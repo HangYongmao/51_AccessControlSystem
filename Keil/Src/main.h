@@ -15,6 +15,24 @@ typedef unsigned long uint32; //32位无符号型
 
 void delay_ms(unsigned int z);
 
+// 用户信息
+typedef struct UserInfo
+{ 
+    unsigned char cardCode[5]; // 卡号
+    int year;
+    int month;
+    int day;
+}UserInfo;
+
+enum MenuPage{
+    HomePage,           // 0-主菜单模式
+    ShowIDPage,         // 1-显示ID
+    IntrusionPage,      // 2-非法闯入
+    ContactAdminPage,   // 3-联系管理员授权
+    PressCardAdminPage, // 4-请管理员刷卡
+    EnterNewCardPage    // 5-录入新卡
+};
+
 //////////////////////////////////
 //端口定义
 // RC522
@@ -38,5 +56,11 @@ sbit LCD12864_RST= P0 ^ 4;	//系统复位选择脚
 sbit LCD12864_RS = P0 ^ 5;	//命令/数据选择脚，L:命令 H：数据
 sbit LCD12864_SCL= P0 ^ 6;	//命令/数据选择脚，L:命令 H：数据
 sbit LCD12864_SDA= P0 ^ 7;	//串行数据输入/输出脚
+
+// 蜂鸣器
+sbit BEEP = P3 ^ 4;
+
+// 录入按键
+sbit KEY_S3 = P3 ^ 3;
 
 #endif

@@ -36,4 +36,22 @@ void InitLcd();
 // 显示主界面
 void LCDDispalyMain();
 
+// 显示 非法闯入！
+void showIntrusion();
+
+// 显示 联系管理员
+void showContactAdmin();
+
+// 显示 请管理员刷卡
+void showPressCardAdmin();
+
+// 显示 录入新卡
+void showEnterNewCark();
+
+// 显示 刷卡成功
+void showEnterCardSuccess();
+
+// 显示 录入成功
+void showEnterNewCardSuccess();
+
 #endif
