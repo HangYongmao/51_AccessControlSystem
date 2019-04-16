@@ -3,6 +3,8 @@
 #include "main.h"
 #include "DS1302.h"
 
+extern unsigned char time[16];
+
 /*====================================
 函数	：LcdSendCmd(uchar DAT)
 参数	：DAT需要发送的命令
@@ -245,8 +247,6 @@ void InitLcd()
 	LCD12864_CS = 1;	//片选关闭			
 }
 
-unsigned char time[16];
-
 // 显示主界面
 void LCDDispalyMain()
 {
@@ -343,5 +343,17 @@ void showEnterNewCardSuccess()
     for (i=0; i<4; i++)
     {
         Disp_16x16(3, 29+16*i, &EnterNewCardSuccess[32*i]);
+    }
+}
+
+// 显示 所持IC卡权限不足
+void showCarkNoPermission()
+{
+    int i;
+    // 清屏指定区域
+    LcdCls(1, 1, 128, 48);
+    for (i=0; i<8; i++)
+    {
+        Disp_16x16(3, 1+16*i, &CarkNoPermission[32*i]);
     }
 }

@@ -25,12 +25,13 @@ typedef struct UserInfo
 }UserInfo;
 
 enum MenuPage{
-    HomePage,           // 0-主菜单模式
-    ShowIDPage,         // 1-显示ID
-    IntrusionPage,      // 2-非法闯入
-    ContactAdminPage,   // 3-联系管理员授权
-    PressCardAdminPage, // 4-请管理员刷卡
-    EnterNewCardPage    // 5-录入新卡
+    HomePage,               // 0-主菜单模式
+    ShowIDPage,             // 1-显示ID
+    IntrusionPage,          // 2-非法闯入
+    ContactAdminPage,       // 3-联系管理员授权
+    PressCardAdminPage,     // 4-请管理员刷卡
+    EnterNewCardPage,       // 5-录入新卡
+    EnterNewCardSuccessPage // 6-录入新卡成功
 };
 
 //////////////////////////////////
@@ -62,5 +63,11 @@ sbit BEEP = P3 ^ 4;
 
 // 录入按键
 sbit KEY_S3 = P3 ^ 3;
+
+// AT24C256
+sbit SCL = P1 ^ 5; //I2C  时钟
+sbit SDA = P1 ^ 6; //I2C  数据
+
+#define  AT24C02 0xa0  //AT24C02 地址
 
 #endif

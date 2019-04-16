@@ -52,21 +52,23 @@ void WriteSet1302(uchar addr, uchar dat)
 // DS1302初始化时间
 void ds1302_init_time()
 {
-//	uchar flag;
-//	flag = ReadSet1302(0x81);
-//	if (flag & 0x80)//判断时钟芯片是否关闭
-//	{
+    // 初始化 校准时间
+	uchar flag;
+	flag = ReadSet1302(0x81);
+    flag = 0x00;
+	if (flag & 0x80)//判断时钟芯片是否关闭
+	{
 		WriteSet1302(0x8E, 0x00);	// 写入不保护指令
-		WriteSetYear(99);
-		WriteSetMonth(01);
-		WriteSetDay(01);
+		WriteSetYear(19);
+		WriteSetMonth(04);
+		WriteSetDay(16);
 		WriteSetWeek(0);
-		WriteSetHour(00);
-		WriteSetMinute(00);
+		WriteSetHour(19);
+		WriteSetMinute(40);
 		WriteSetSecond(00);
 		WriteSet1302(0x90, 0xa5);	// 打开充电功能 选择2K电阻充电方式
 		WriteSet1302(0x8E, 0x80);	// 打开写保护
-//	}
+	}
 }
 
 // DS1302写入年
@@ -112,24 +114,24 @@ void WriteSetSecond(uchar Second)
 }
 
 // 读取当前时间
-void readCurrentTime(char * time)
+void readCurrentTime(unsigned char * timeR)
 {
-    // sprintf(time, "20%2d-%2d-%2d %2d:%2d", ReadSet1302(0x8d)%100, ReadSet1302(0x89)%12, ReadSet1302(0x87)%31, ReadSet1302(0x85)%24, ReadSet1302(0x83)%60);
-    time[0] = '2';
-    time[1] = '0';
-    time[2] = ReadSet1302(0x8d)%100/10+'0';
-    time[3] = ReadSet1302(0x8d)%100%10+'0';
-    time[4] = '-';
-    time[5] = ReadSet1302(0x89)%12/10+'0';
-    time[6] = ReadSet1302(0x89)%12%10+'0';
-    time[7] = '-';
-    time[8] = ReadSet1302(0x87)%31/10+'0';
-    time[9] = ReadSet1302(0x87)%31%10+'0';
-    time[10] = ' ';
-    time[11] = ReadSet1302(0x85)%24/10+'0';
-    time[12] = ReadSet1302(0x85)%24%10+'0';
-    time[13] = ':';
-    time[14] = ReadSet1302(0x83)%60/10+'0';
-    time[15] = ReadSet1302(0x83)%60%10+'0';
-    sprintf(time, "2019-04-12 20:28");
+    timeR[0] = '2';
+    timeR[1] = '0';
+    timeR[2] = ReadSet1302(0x8d)%100/10+'0';
+    timeR[3] = ReadSet1302(0x8d)%100%10+'0';
+    timeR[4] = '-';
+    timeR[5] = ReadSet1302(0x89)%12/10+'0';
+    timeR[6] = ReadSet1302(0x89)%12%10+'0';
+    timeR[7] = '-';
+    timeR[8] = ReadSet1302(0x87)%31/10+'0';
+    timeR[9] = ReadSet1302(0x87)%31%10+'0';
+    timeR[10] = ' ';
+    timeR[11] = ReadSet1302(0x85)%24/10+'0';
+    timeR[12] = ReadSet1302(0x85)%24%10+'0';
+    timeR[13] = ':';
+    timeR[14] = ReadSet1302(0x83)%60/10+'0';
+    timeR[15] = ReadSet1302(0x83)%60%10+'0';
+//    timeR[14] = ReadSet1302(0x81)%60/10+'0';
+//    timeR[15] = ReadSet1302(0x81)%60%10+'0';
 }

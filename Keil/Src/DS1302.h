@@ -23,7 +23,7 @@ uchar ReadSet1302(uchar dat);
 void ds1302_write_time();
 
 // 读取当前时间
-void readCurrentTime(char * time);
+void readCurrentTime(unsigned char * timeR);
 
 void WriteSetYear(uchar Year);
 void WriteSetMonth(uchar Month);

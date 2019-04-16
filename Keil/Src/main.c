@@ -21,11 +21,14 @@ bit clsFlag=0;  // 1-需要清屏
 
 enum MenuPage menuPage=HomePage;
 extern unsigned char clock;
+unsigned char time[16];
 bit IntrusionFlag = 0;  // 1-非法闯入
 
 bit KeyFlag=0;    // 1-录入新卡
 
-UserInfo user[10];
+UserInfo user[20];
+unsigned char userCount=0;
+UserInfo adminUser={{0xAC, 0xEC, 0x45, 0xD2, 0x00}, 99, 12, 30}; // 管理员
 
 void delay_ms(unsigned int z)
 {
@@ -41,19 +44,25 @@ void InitUserInfo()
     user[0].cardCode[2] = 0x45;
     user[0].cardCode[3] = 0xD2;
     user[0].cardCode[4] = 0x00;
+    userCount++;
 }
 
 bit assertUserCode(unsigned char *cardCode)
 {
-    if ((user[0].cardCode[0] == cardCode[0]) && \
-        (user[0].cardCode[1] == cardCode[1]) && \
-        (user[0].cardCode[2] == cardCode[2]) && \
-        (user[0].cardCode[3] == cardCode[3]))
+    int i=0;
+    for (i=0; i<10; i++)
     {
-        return 1;
+        if (i>=userCount)
+            return 0;
+        if ((user[i].cardCode[0] == cardCode[0]) && \
+            (user[i].cardCode[1] == cardCode[1]) && \
+            (user[i].cardCode[2] == cardCode[2]) && \
+            (user[i].cardCode[3] == cardCode[3]))
+        {
+            return 1;
+        }
     }
-    else
-        return 0;
+    return 0;
 }
 
 int main()
@@ -135,28 +144,40 @@ int main()
             // 录入管理员卡片
             if (menuPage == PressCardAdminPage)
             {
-            // OLED显示
-                // 清屏指定区域
-                LcdCls(1, 1, 128, 48);
-                Disp_String_8x16(1, 1, "Card Type: ");
-                Disp_String_Hex(3, 1, cardType[0]);
-                Disp_String_Hex(3, 17, cardType[1]);
-                
-                // Disp_String_8x16(5, 1, "Card Code: ");
-                Disp_String_Hex(5, 1, cardCode[0]);
-                Disp_String_Hex(5, 17, cardCode[1]);
-                Disp_String_Hex(5, 33, cardCode[2]);
-                Disp_String_Hex(5, 49, cardCode[3]);
-                
-                delay_ms(1000);
-                
-                menuPage = EnterNewCardPage;
-                // 显示 录入新卡
-                showEnterNewCark();
-                continue;
+                if ((adminUser.cardCode[0] == cardCode[0]) && \
+                    (adminUser.cardCode[1] == cardCode[1]) && \
+                    (adminUser.cardCode[2] == cardCode[2]) && \
+                    (adminUser.cardCode[3] == cardCode[3]))
+                {
+                // OLED显示
+                    // 清屏指定区域
+                    LcdCls(1, 1, 128, 48);
+                    Disp_String_8x16(1, 1, "Card Type: ");
+                    Disp_String_Hex(3, 1, cardType[0]);
+                    Disp_String_Hex(3, 17, cardType[1]);
+                    
+                    // Disp_String_8x16(5, 1, "Card Code: ");
+                    Disp_String_Hex(5, 1, cardCode[0]);
+                    Disp_String_Hex(5, 17, cardCode[1]);
+                    Disp_String_Hex(5, 33, cardCode[2]);
+                    Disp_String_Hex(5, 49, cardCode[3]);
+                    
+                    delay_ms(1000);
+                    
+                    menuPage = EnterNewCardPage;
+                    // 显示 录入新卡
+                    showEnterNewCark();
+                    continue;
+                }
+                else
+                {
+                    // 显示 所持IC卡权限不足
+                    showCarkNoPermission();
+                    continue;
+                }
             }
             // 录入新卡
-            if (menuPage == EnterNewCardPage)
+            if ((menuPage == EnterNewCardPage) || (menuPage == EnterNewCardSuccessPage))
             {
             // OLED显示
                 // 清屏指定区域
@@ -170,6 +191,14 @@ int main()
                 Disp_String_Hex(5, 17, cardCode[1]);
                 Disp_String_Hex(5, 33, cardCode[2]);
                 Disp_String_Hex(5, 49, cardCode[3]);
+                
+                user[userCount].cardCode[0] = cardCode[0];
+                user[userCount].cardCode[1] = cardCode[1];
+                user[userCount].cardCode[2] = cardCode[2];
+                user[userCount].cardCode[3] = cardCode[3];
+                user[userCount].cardCode[4] = 0x00;
+                
+                menuPage = EnterNewCardSuccessPage;
                 
                 continue;
             }
@@ -243,7 +272,6 @@ int main()
             clsFlag = 0;
             clock = 0;
             menuPage = HomePage;
-            
             TR0 = 1;    // 定时器0 打开
         }
         
@@ -260,15 +288,19 @@ int main()
             delay_ms(500);
             BEEP = ~BEEP;
             IntrusionFlag = 0;
+            TR0 = 1;    // 定时器0 打开
         }
         
         // 录入新卡
         if (KeyFlag == 1)
         {
             KeyFlag = 0;
-            if ((menuPage == PressCardAdminPage) || (menuPage == EnterNewCardPage))
+            if ((menuPage == PressCardAdminPage) || (menuPage == EnterNewCardPage) || (menuPage == EnterNewCardSuccessPage))
             {
                 clsFlag = 1;
+                // 录入新卡成功，卡号计数+1
+                if (menuPage == EnterNewCardSuccessPage)
+                    userCount++;
                 continue;
             }
             // 显示 请管理员刷卡
@@ -276,5 +308,8 @@ int main()
             TR0 = 0;    // 关闭定时器
             menuPage = PressCardAdminPage;
         }
+        // 显示时间
+        readCurrentTime(time);
+        Disp_String_8x16(7, 1, time);
 	}
 }

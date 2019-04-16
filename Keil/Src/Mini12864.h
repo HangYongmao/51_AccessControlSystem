@@ -54,4 +54,7 @@ void showEnterCardSuccess();
 // 显示 录入成功
 void showEnterNewCardSuccess();
 
+// 显示 所持IC卡权限不足
+void showCarkNoPermission();
+
 #endif
