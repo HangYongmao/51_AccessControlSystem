@@ -1,6 +1,6 @@
 /*
 *  基于ISO/IEC14443 TypeA的智慧车库门禁控制系统设计与实现
-*  CPU:STC89C52RC
+*  CPU:STC90C516RD+
 *  晶振:11.0592MHZ
 ------------------------------------------------*/
 #include <reg52.h>
@@ -33,8 +33,9 @@ unsigned char userCount=0;
 UserInfo adminUser={{0xAC, 0xEC, 0x45, 0xD2, 0x00}, 99, 12, 30}; // 管理员
 
 enum EEPROMType enumer=AT24256; // 定义一个枚举变量 读写AT24C256
-unsigned char AT24C02Buff[12];      // 数据缓冲区
+unsigned char AT24C02Buff[12];  // 数据缓冲区
 
+// 延时z ms
 void delay_ms(unsigned int z)
 {
 	unsigned int x, y;
@@ -42,6 +43,7 @@ void delay_ms(unsigned int z)
 	for (y = 110; y>0; y--);
 }
 
+// 初始化用户信息 管理员 读取QT24C256的数据
 void InitUserInfo()
 {
     int k=0;
@@ -64,6 +66,7 @@ void InitUserInfo()
         RW24xx(&user[k].cardCode[0], 4, 8*k, 0xA1, enumer);// 读
 }
 
+// 判断是否是已注册的用户
 char assertUserCode(unsigned char *cardCode)
 {
     int i=0;
