@@ -54,17 +54,17 @@ void ds1302_init_time()
 {
     // 初始化 校准时间
 	uchar flag;
-	flag = ReadSet1302(0x81);
+//	flag = ReadSet1302(0x81);
     flag = 0x00;
 	if (flag & 0x80)//判断时钟芯片是否关闭
 	{
 		WriteSet1302(0x8E, 0x00);	// 写入不保护指令
 		WriteSetYear(19);
 		WriteSetMonth(04);
-		WriteSetDay(16);
+		WriteSetDay(18);
 		WriteSetWeek(0);
-		WriteSetHour(19);
-		WriteSetMinute(40);
+		WriteSetHour(13);
+		WriteSetMinute(28);
 		WriteSetSecond(00);
 		WriteSet1302(0x90, 0xa5);	// 打开充电功能 选择2K电阻充电方式
 		WriteSet1302(0x8E, 0x80);	// 打开写保护
@@ -121,11 +121,11 @@ void readCurrentTime(unsigned char * timeR)
     timeR[2] = ReadSet1302(0x8d)%100/10+'0';
     timeR[3] = ReadSet1302(0x8d)%100%10+'0';
     timeR[4] = '-';
-    timeR[5] = ReadSet1302(0x89)%12/10+'0';
-    timeR[6] = ReadSet1302(0x89)%12%10+'0';
+    timeR[5] = ReadSet1302(0x89)%13/10+'0';
+    timeR[6] = ReadSet1302(0x89)%13%10+'0';
     timeR[7] = '-';
-    timeR[8] = ReadSet1302(0x87)%31/10+'0';
-    timeR[9] = ReadSet1302(0x87)%31%10+'0';
+    timeR[8] = ReadSet1302(0x87)%32/10+'0';
+    timeR[9] = ReadSet1302(0x87)%32%10+'0';
     timeR[10] = ' ';
     timeR[11] = ReadSet1302(0x85)%24/10+'0';
     timeR[12] = ReadSet1302(0x85)%24%10+'0';

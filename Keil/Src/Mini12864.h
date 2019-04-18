@@ -57,4 +57,7 @@ void showEnterNewCardSuccess();
 // 显示 所持IC卡权限不足
 void showCarkNoPermission();
 
+// 显示 充值成功
+void showRechargeSuccess();
+
 #endif

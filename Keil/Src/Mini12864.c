@@ -357,3 +357,15 @@ void showCarkNoPermission()
         Disp_16x16(3, 1+16*i, &CarkNoPermission[32*i]);
     }
 }
+
+// 显示 充值成功
+void showRechargeSuccess()
+{
+        int i;
+    // 清屏指定区域
+    LcdCls(1, 1, 128, 48);
+    for (i=0; i<4; i++)
+    {
+        Disp_16x16(3, 33+16*i, &RechargeSuccess[32*i]);
+    }
+}

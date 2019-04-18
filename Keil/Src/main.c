@@ -1,5 +1,5 @@
 /*
-*  基于ISO/IEC14443 Type A的智慧车库门禁控制系统设计与实现
+*  基于ISO/IEC14443 TypeA的智慧车库门禁控制系统设计与实现
 *  CPU:STC89C52RC
 *  晶振:11.0592MHZ
 ------------------------------------------------*/
@@ -44,6 +44,7 @@ void delay_ms(unsigned int z)
 
 void InitUserInfo()
 {
+    int k=0;
     // 管理员卡号
     user[0].cardCode[0] = adminUser.cardCode[0];
     user[0].cardCode[1] = adminUser.cardCode[1];
@@ -56,6 +57,11 @@ void InitUserInfo()
 // 读取userCount
     RW24xx(&AT24C02Buff[0], 1, 0x00, 0xA1, enumer);// 读
     Putc_to_SerialPort_Hex(AT24C02Buff[0]);
+    userCount = AT24C02Buff[0];
+    
+// 读取卡号
+    while(k++ < userCount)
+        RW24xx(&user[k].cardCode[0], 4, 8*k, 0xA1, enumer);// 读
 }
 
 char assertUserCode(unsigned char *cardCode)
@@ -193,24 +199,37 @@ int main()
             // OLED显示
                 // 清屏指定区域
                 // LcdCls(1, 1, 128, 48);
-                
-                // 显示 录入成功
-                showEnterNewCardSuccess();
-                
-                //Disp_String_8x16(5, 1, "Card Code: ");
-                Disp_String_Hex(5, 1, cardCode[0]);
-                Disp_String_Hex(5, 17, cardCode[1]);
-                Disp_String_Hex(5, 33, cardCode[2]);
-                Disp_String_Hex(5, 49, cardCode[3]);
-                
-                user[userCount].cardCode[0] = cardCode[0];
-                user[userCount].cardCode[1] = cardCode[1];
-                user[userCount].cardCode[2] = cardCode[2];
-                user[userCount].cardCode[3] = cardCode[3];
-                user[userCount].cardCode[4] = 0x00;
-                
-                menuPage = EnterNewCardSuccessPage;
-                
+                int userNum;
+                if ((userNum=assertUserCode(cardCode)) != -1)
+                {
+                    // 显示 充值成功
+                    showRechargeSuccess();
+                    menuPage = RechargeSuccessPage;
+                }
+                else
+                {
+                    // 显示 录入成功
+                    showEnterNewCardSuccess();
+                    
+                    //Disp_String_8x16(5, 1, "Card Code: ");
+                    Disp_String_Hex(5, 1, cardCode[0]);
+                    Disp_String_Hex(5, 17, cardCode[1]);
+                    Disp_String_Hex(5, 33, cardCode[2]);
+                    Disp_String_Hex(5, 49, cardCode[3]);
+                    
+                    user[userCount].cardCode[0] = cardCode[0];
+                    user[userCount].cardCode[1] = cardCode[1];
+                    user[userCount].cardCode[2] = cardCode[2];
+                    user[userCount].cardCode[3] = cardCode[3];
+                    user[userCount].cardCode[4] = 0x00;
+                    
+                    menuPage = EnterNewCardSuccessPage;
+                }
+                continue;
+            }
+            // 充值成功界面
+            if (menuPage == RechargeSuccessPage)
+            {
                 continue;
             }
             
@@ -306,7 +325,10 @@ int main()
         if (KeyFlag == 1)
         {
             KeyFlag = 0;
-            if ((menuPage == PressCardAdminPage) || (menuPage == EnterNewCardPage) || (menuPage == EnterNewCardSuccessPage))
+            if ((menuPage == PressCardAdminPage) ||\
+                (menuPage == EnterNewCardPage) ||\
+                (menuPage == EnterNewCardSuccessPage) ||\
+                (menuPage == RechargeSuccessPage))
             {
                 clsFlag = 1;
                 // 录入新卡成功，卡号计数+1
@@ -317,7 +339,9 @@ int main()
                     // 写入数据到AT24CXX中
                     AT24C02Buff[0] = userCount;
                     Putc_to_SerialPort_Hex(userCount);
-                    RW24xx(&AT24C02Buff[0], 1, 0x00, 0xA0, enumer);// 写
+                    RW24xx(&AT24C02Buff[0], 1, 0x00, 0xA0, enumer);// 写 userCount
+                    
+                    RW24xx(&user[userCount-1].cardCode[0], 4, (userCount-1)*8, 0xA0, enumer);// 写 user[0].cardCode
                 }
                 continue;
             }

@@ -31,7 +31,8 @@ enum MenuPage{
     ContactAdminPage,       // 3-联系管理员授权
     PressCardAdminPage,     // 4-请管理员刷卡
     EnterNewCardPage,       // 5-录入新卡
-    EnterNewCardSuccessPage // 6-录入新卡成功
+    EnterNewCardSuccessPage,// 6-录入新卡成功
+    RechargeSuccessPage     // 7-充值成功
 };
 
 //////////////////////////////////
