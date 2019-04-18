@@ -17,7 +17,7 @@ void delay_ms(unsigned int z);
 
 // 用户信息
 typedef struct UserInfo
-{ 
+{
     unsigned char cardCode[5]; // 卡号
     int year;
     int month;
@@ -65,9 +65,9 @@ sbit BEEP = P3 ^ 4;
 sbit KEY_S3 = P3 ^ 3;
 
 // AT24C256
-sbit SCL = P1 ^ 5; //I2C  时钟
-sbit SDA = P1 ^ 6; //I2C  数据
+sbit SCL = P1 ^ 5;  // I2C  时钟
+sbit SDA = P1 ^ 6;  // I2C  数据
 
-#define  AT24C02 0xa0  //AT24C02 地址
+#define AT24C02 0xA0  // AT24C02 地址
 
 #endif

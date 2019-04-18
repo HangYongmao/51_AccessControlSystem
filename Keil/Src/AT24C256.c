@@ -2,73 +2,77 @@
 #include "I2C.h"
 #include "AT24C256.h"
 
-extern bit ack;
-
-//AT24XX的功能函数
-/*******************************************************************
-向有子地址器件发送多字节数据函数
-函数原型: bit  ISendStr(UCHAR sla,UCHAR suba,ucahr *s,UCHAR no);
-功能:     从启动总线到发送地址，子地址,数据，结束总线的全过程,从器件
-地址sla，子地址suba，发送内容是s指向的内容，发送no个字节。
-如果返回1表示操作成功，否则操作有误。
-注意：    使用前必须已结束总线。
-********************************************************************/
-bit ISendStr(unsigned char sla, unsigned char  suba, unsigned char *s, unsigned char no)
+// AT24C01～AT24C256 的读写程序
+// DataBuff-读写数据缓冲区指针
+//   Length-进行读写的字节数
+//     Addr-EEPROM首址 AT24256为0～32767
+//  Control-EEPROM控制字节
+//   enumer-EEPROM类型
+// 返回1表示此次操作失效, 0表示操作成功;
+// 1K位，2K位，4K位，8K位，16K位芯片采用一个8位长的字节地址码，
+// 对于32K位以上的采用2个8位长的字节地址码直接寻址，
+// 而4K位，8K位，16K位配合页面地址来寻址。
+bit RW24xx(unsigned char *DataBuff, unsigned char Length, unsigned int Addr,
+	unsigned char Control, enum EEPROMType enumer)
 {
-	unsigned char i;
 
-	Start_I2c();               /*启动总线*/
-	SendByte(sla);             /*发送器件地址*/
-	if (ack == 0)
-        return(0);
-	SendByte(suba);            /*发送器件子地址*/
-	if (ack == 0)
-        return(0);
-
-	for (i = 0; i<no; i++)
+	unsigned char data j, i = ERROR;
+	bit errorflag = 1;  // 出错标志
+	while (i--)
 	{
-		SendByte(*s);            /*发送数据*/
-		if (ack == 0)
-            return(0);
-		s++;
+		Start();                // 启动总线
+		Send(Control & 0xfe);   // 向IIC总线写数据，器件地址
+		if (RecAck()) continue; // 如写不正确结束本次循环
+        
+        // 如果容量大于32K位，使用16位地址寻址，写入高八位地址
+		if (enumer > AT2416)
+		{
+			Send((unsigned char)(Addr >> 8));// 把整型数据转换为字符型数据：弃高取低，只取低8位.
+			if (RecAck())
+                continue;
+		}
+		Send((unsigned char)Addr);  // 向IIC总线写数据
+		if (RecAck())
+            continue;    // 如写正确结束本次循环
+		if (!(Control & 0x01))      // 判断是读器件还是写器件
+		{
+			j = Length;
+			errorflag = 0;          // 清错误特征位
+			while (j--)
+			{
+				Send(*DataBuff++);  // 向IIC总线写数据
+				if (!RecAck())
+                    continue;       // 如写正确结束本次循环
+				errorflag = 1;
+				break;
+			}
+			if (errorflag == 1)
+                continue;
+			break;
+		}
+		else
+		{
+			Start();        // 启动总线
+			Send(Control);  // 向IIC总线写数据
+			if (RecAck())
+                continue;   // 器件没应答结束本次本层循环
+			while (--Length)// 字节长为0结束
+			{
+				*DataBuff++ = Receive();
+				Ack();      // 对IIC总线产生应答
+			}
+			*DataBuff = Receive(); // 读最后一个字节
+			NoAck();        // 不对IIC总线产生应答
+			errorflag = 0;
+			break;
+		}
 	}
-	Stop_I2c();                /*结束总线*/
-
-	return(1);
-}
-
-/*******************************************************************
-向有子地址器件读取多字节数据函数
-函数原型: bit  RecndStr(UCHAR sla,UCHAR suba,ucahr *s,UCHAR no);
-功能:     从启动总线到发送地址，子地址,读数据，结束总线的全过程,从器件
-地址sla，子地址suba，读出的内容放入s指向的存储区，读no个字节。
-如果返回1表示操作成功，否则操作有误。
-注意：    使用前必须已结束总线。
-********************************************************************/
-bit IRcvStr(unsigned char sla, unsigned char suba, unsigned char *s, unsigned char no)
-{
-	unsigned char i;
-
-	Start_I2c();                  /*启动总线*/
-	SendByte(sla);                /*发送器件地址*/
-	if (ack == 0)
-        return(0);
-	SendByte(suba);               /*发送器件子地址*/
-	if (ack == 0)
-        return(0);
-
-	Start_I2c();                 /*重新启动总线*/
-	SendByte(sla + 1);
-	if (ack == 0)
-        return(0);
-	for (i = 0; i<no - 1; i++)
+	Stop();  // 停止IIC总线
+	if (!(Control & 0x01))
 	{
-		*s = RcvByte();               /*发送数据*/
-		Ack_I2c(0);                /*发送就答位*/
-		s++;
+		Delay(255);
+		Delay(255);
+		Delay(255);
 	}
-	*s = RcvByte();
-	Ack_I2c(1);                   /*发送非应位*/
-	Stop_I2c();                   /*结束总线*/
-	return(1);
+	return(errorflag);
 }

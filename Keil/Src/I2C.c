@@ -1,163 +1,109 @@
-/*************************此部分为I2C总线的驱动程序*************************************/
+// 此部分为I2C总线的驱动程序
 #include <reg52.h>
 #include <intrins.h>
 #include "main.h"
 #include "I2C.h"
 
-#define  NOP()   _nop_()   /* 定义空指令 */
-#define  _Nop()  _nop_()   /*定义空指令*/
-
-bit ack;                 /*应答标志位*/
-
-/*******************************************************************
-起动总线函数
-函数原型: void  Start_I2c();
-功能:     启动I2C总线,即发送I2C起始条件.
-********************************************************************/
-void Start_I2c()
+// 一个简单延时程序
+void Delay(unsigned char DelayCount)
 {
-	SDA = 1;         /*发送起始条件的数据信号*/
-	_Nop();
+	while (DelayCount--);
+}
+
+// 以下是对IIC总线的操作子程序
+// 启动总线
+void Start(void)
+{
+    SCL = 0;    // SCL处于高电平时,SDA从高电平转向低电平表示
+    SDA = 1;    // 一个"开始"状态,该状态必须在其他命令之前执行
+    Delay(1);
+    SCL = 1;
+    Delay(1);
+    SDA = 0;
+    Delay(1);
+    SCL = 0;
+    SDA = 1;
+    Delay(1);
+}
+
+// 停止IIC总线
+void Stop(void)
+{
+	SCL = 0;    // SCL处于高电平时,SDA从低电平转向高电平
+	SDA = 0;    // 表示一个"停止"状态,该状态终止所有通讯
+	Delay(1);
 	SCL = 1;
-	_Nop();        /*起始条件建立时间大于4.7us,延时*/
-	_Nop();
-	_Nop();
-	_Nop();
-	_Nop();
-	SDA = 0;         /*发送起始信号*/
-	_Nop();        /* 起始条件锁定时间大于4μs*/
-	_Nop();
-	_Nop();
-	_Nop();
-	_Nop();
-	SCL = 0;       /*钳住I2C总线，准备发送或接收数据 */
-	_Nop();
-	_Nop();
+	Delay(1);   // 空操作
+	SDA = 1;
+	Delay(1);
+	SCL = 0;
+	Delay(1000);
 }
 
-/*******************************************************************
-结束总线函数
-函数原型: void  Stop_I2c();
-功能:     结束I2C总线,即发送I2C结束条件.
-********************************************************************/
-void Stop_I2c()
+// 检查应答位
+bit RecAck(void)
 {
-	SDA = 0;      /*发送结束条件的数据信号*/
-	_Nop();       /*发送结束条件的时钟信号*/
-	SCL = 1;      /*结束条件建立时间大于4μs*/
-	_Nop();
-	_Nop();
-	_Nop();
-	_Nop();
-	_Nop();
-	SDA = 1;      /*发送I2C总线结束信号*/
-	_Nop();
-	_Nop();
-	_Nop();
-	_Nop();
+	SCL = 0;
+	SDA = 1;
+	Delay(20);
+	SCL = 1;
+	Delay(1);
+	Delay(1);
+	CY = SDA;   // 因为返回值总是放在CY中的
+	SCL = 0;
+	Delay(20);
+	return(CY);
 }
 
-/*******************************************************************
-字节数据发送函数
-函数原型: void  SendByte(UCHAR c);
-功能:     将数据c发送出去,可以是地址,也可以是数据,发完后等待应答,并对
-此状态位进行操作.(不应答或非应答都使ack=0)
-发送数据正常，ack=1; ack=0表示被控器无应答或损坏。
-********************************************************************/
-void SendByte(unsigned char  c)
+// 对IIC总线产生应答
+void Ack(void)
 {
-	unsigned char  BitCnt;
+	SDA = 0;    // EEPROM通过在收到每个地址或数据之后,
+	SCL = 1;    // 置SDA低电平的方式确认表示收到读SDA口状态
+	Delay(1);
+	SCL = 0;
+	Delay(1);
+	SDA = 1;
+}
 
-	for (BitCnt = 0; BitCnt<8; BitCnt++)  /*要传送的数据长度为8位*/
+// 不对IIC总线产生应答
+void NoAck(void)
+{
+	SDA = 1;
+	SCL = 1;
+	Delay(1);
+	SCL = 0;
+}
+
+// 向IIC总线写数据
+void Send(unsigned char sendbyte)
+{
+	unsigned char data j = 8;
+	for (; j>0; j--)
 	{
-		if ((c << BitCnt) & 0x80)/*判断发送位*/
-            SDA = 1;
-		else
-            SDA = 0;
-		_Nop();
-		SCL = 1;               /*置时钟线为高，通知被控器开始接收数据位*/
-		_Nop();
-		_Nop();             /*保证时钟高电平周期大于4μs*/
-		_Nop();
-		_Nop();
-		_Nop();
 		SCL = 0;
+		sendbyte <<= 1; // 使CY=sendbyte^7;
+		SDA = CY;       // CY 进位标志位
+		Delay(1);
+		SCL = 1;
+		Delay(20);
 	}
-
-	_Nop();
-	_Nop();
-	SDA = 1;                /*8位发送完后释放数据线，准备接收应答位*/
-	_Nop();
-	_Nop();
-	SCL = 1;
-	_Nop();
-	_Nop();
-	_Nop();
-	if (SDA == 1)ack = 0;
-	else ack = 1;        /*判断是否接收到应答信号*/
 	SCL = 0;
-	_Nop();
-	_Nop();
+	Delay(1);
 }
 
-/*******************************************************************
-字节数据接收函数
-函数原型: UCHAR  RcvByte();
-功能:        用来接收从器件传来的数据,并判断总线错误(不发应答信号)，
-发完后请用应答函数应答从机。
-********************************************************************/
-unsigned char RcvByte()
+// 从IIC总线上读数据子程序
+unsigned char Receive(void)
 {
-	unsigned char  retc;
-	unsigned char  BitCnt;
-
-	retc = 0;
-	SDA = 1;    /*置数据线为输入方式*/
-	for (BitCnt = 0; BitCnt<8; BitCnt++)
+	register receivebyte, i = 8;
+	SCL = 0;
+	while (i--)
 	{
-		_Nop();
-		SCL = 0;        /*置时钟线为低，准备接收数据位*/
-		_Nop();
-		_Nop();         /*时钟低电平周期大于4.7μs*/
-		_Nop();
-		_Nop();
-		_Nop();
-		SCL = 1;        /*置时钟线为高使数据线上数据有效*/
-		_Nop();
-		_Nop();
-		retc = retc << 1;
-		if (SDA == 1)
-            retc = retc + 1;  /*读数据位,接收的数据位放入retc中 */
-		_Nop();
-		_Nop();
+		SCL = 1;
+		receivebyte = (receivebyte << 1) | SDA;
+		Delay(1);
+		SCL = 0;
+		Delay(1);
 	}
-	SCL = 0;
-	_Nop();
-	_Nop();
-	return(retc);
-}
-
-/********************************************************************
-应答子函数
-函数原型:  void Ack_I2c(bit a);
-功能:      主控器进行应答信号(可以是应答或非应答信号，由位参数a决定)
-********************************************************************/
-void Ack_I2c(bit a)
-{
-	if (a == 0)/*在此发出应答或非应答信号 */
-        SDA = 0;
-	else
-        SDA = 1;
-	_Nop();
-	_Nop();
-	_Nop();
-	SCL = 1;
-	_Nop();
-	_Nop();     /*时钟低电平周期大于4μs*/
-	_Nop();
-	_Nop();
-	_Nop();
-	SCL = 0;    /*清时钟线，钳住I2C总线以便继续接收*/
-	_Nop();
-	_Nop();
+	return(receivebyte);
 }

@@ -15,6 +15,8 @@
 #include "DS1302.h"
 #include "Infrared.h"
 #include "KEY.h"
+#include "AT24C256.h"
+#include "I2C.h"
 
 unsigned char g_ucTempbuf[20];
 bit clsFlag=0;  // 1-需要清屏
@@ -30,6 +32,9 @@ UserInfo user[20];
 unsigned char userCount=0;
 UserInfo adminUser={{0xAC, 0xEC, 0x45, 0xD2, 0x00}, 99, 12, 30}; // 管理员
 
+enum EEPROMType enumer=AT24256; // 定义一个枚举变量 读写AT24C256
+unsigned char AT24C02Buff[12];      // 数据缓冲区
+
 void delay_ms(unsigned int z)
 {
 	unsigned int x, y;
@@ -39,30 +44,36 @@ void delay_ms(unsigned int z)
 
 void InitUserInfo()
 {
-    user[0].cardCode[0] = 0xAC;
-    user[0].cardCode[1] = 0xEC;
-    user[0].cardCode[2] = 0x45;
-    user[0].cardCode[3] = 0xD2;
+    // 管理员卡号
+    user[0].cardCode[0] = adminUser.cardCode[0];
+    user[0].cardCode[1] = adminUser.cardCode[1];
+    user[0].cardCode[2] = adminUser.cardCode[2];
+    user[0].cardCode[3] = adminUser.cardCode[3];
     user[0].cardCode[4] = 0x00;
     userCount++;
+    
+    // 读取AT24CXX中的数据
+// 读取userCount
+    RW24xx(&AT24C02Buff[0], 1, 0x00, 0xA1, enumer);// 读
+    Putc_to_SerialPort_Hex(AT24C02Buff[0]);
 }
 
-bit assertUserCode(unsigned char *cardCode)
+char assertUserCode(unsigned char *cardCode)
 {
     int i=0;
     for (i=0; i<10; i++)
     {
         if (i>=userCount)
-            return 0;
+            return -1;
         if ((user[i].cardCode[0] == cardCode[0]) && \
             (user[i].cardCode[1] == cardCode[1]) && \
             (user[i].cardCode[2] == cardCode[2]) && \
             (user[i].cardCode[3] == cardCode[3]))
         {
-            return 1;
+            return i;
         }
     }
-    return 0;
+    return -1;
 }
 
 int main()
@@ -186,7 +197,7 @@ int main()
                 // 显示 录入成功
                 showEnterNewCardSuccess();
                 
-                // Disp_String_8x16(5, 1, "Card Code: ");
+                //Disp_String_8x16(5, 1, "Card Code: ");
                 Disp_String_Hex(5, 1, cardCode[0]);
                 Disp_String_Hex(5, 17, cardCode[1]);
                 Disp_String_Hex(5, 33, cardCode[2]);
@@ -208,7 +219,7 @@ int main()
             {
                 strcpy(lastCardType, cardType);
                 strcpy(lastCardCode, cardCode);
-                if (assertUserCode(cardCode))
+                if (assertUserCode(cardCode) != -1)
                 {
                     menuPage = ShowIDPage;
                     
@@ -300,7 +311,14 @@ int main()
                 clsFlag = 1;
                 // 录入新卡成功，卡号计数+1
                 if (menuPage == EnterNewCardSuccessPage)
+                {
                     userCount++;
+                    
+                    // 写入数据到AT24CXX中
+                    AT24C02Buff[0] = userCount;
+                    Putc_to_SerialPort_Hex(userCount);
+                    RW24xx(&AT24C02Buff[0], 1, 0x00, 0xA0, enumer);// 写
+                }
                 continue;
             }
             // 显示 请管理员刷卡
