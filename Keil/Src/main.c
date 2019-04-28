@@ -286,6 +286,11 @@ int main()
                     // 显示 联系管理员
                     showContactAdmin();
                     
+                    Disp_String_Hex(5, 1, cardCode[0]);
+                    Disp_String_Hex(5, 17, cardCode[1]);
+                    Disp_String_Hex(5, 33, cardCode[2]);
+                    Disp_String_Hex(5, 49, cardCode[3]);
+                    
                     menuPage = ContactAdminPage;
                     clock = 0;
                     clsFlag = 0;
